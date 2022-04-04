@@ -35,7 +35,7 @@
 		:show-week-number="showWeekNumbers"
 		:use12h="showAmPm"
 		:append-to-body="appendToBody"
-		:open.sync="open"
+		:open.sync="openDialogState"
 		v-bind="$attrs"
 		v-on="$listeners"
 		@close="close"
@@ -70,8 +70,7 @@
 				@click="toggleTimePanel">
 				{{ $t('calendar', 'Pick a date') }}
 			</button>
-			<button class="mx-btn mx-btn-text"
-			    @click="closePicker">
+			<button class="mx-btn mx-btn-text" @click="closePicker">
 				{{ $t('calendar', 'Ok') }}
 			</button>
 		</template>
@@ -215,6 +214,9 @@ export default {
 			const timeFormat = localeData.longDateFormat('LT').toLowerCase()
 
 			return timeFormat.indexOf('a') !== -1
+		},
+		openDialogState() {
+			return this.open
 		},
 	},
 	methods: {
