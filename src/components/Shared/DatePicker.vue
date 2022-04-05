@@ -35,12 +35,12 @@
 		:show-week-number="showWeekNumbers"
 		:use12h="showAmPm"
 		:append-to-body="appendToBody"
-		:open.sync="openDialogState"
 		v-bind="$attrs"
 		v-on="$listeners"
 		@close="close"
 		@change="change"
-		@pick="pickDate">
+		@pick="pickDate"
+		confirm>
 		<template #icon-calendar>
 			<button class="datetime-picker-inline-icon icon"
 				:class="{'icon-timezone': !isAllDay, 'icon-new-calendar': isAllDay, 'datetime-picker-inline-icon--highlighted': highlightTimezone}"
@@ -69,9 +69,6 @@
 				class="mx-btn mx-btn-text"
 				@click="toggleTimePanel">
 				{{ $t('calendar', 'Pick a date') }}
-			</button>
-			<button class="mx-btn mx-btn-text" @click="closePicker">
-				{{ $t('calendar', 'Ok') }}
 			</button>
 		</template>
 	</DatetimePicker>
@@ -132,10 +129,6 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-	  open: {
-		  type: Boolean,
-		  default: true,
-	  }
 	},
 	data() {
 		return {
@@ -215,9 +208,6 @@ export default {
 
 			return timeFormat.indexOf('a') !== -1
 		},
-		openDialogState() {
-			return this.open
-		},
 	},
 	methods: {
 		/**
@@ -265,13 +255,6 @@ export default {
 			this.showTimePanel = true
 			this.$emit('close')
 		},
-	  /**
-	   * Closes the picker.
-	   */
-	  closePicker() {
-			this.$emit('change', this.date)
-			this.open = false
-	  },
 		/**
 		 * Toggles the time-picker
 		 */
