@@ -322,6 +322,14 @@ export default {
 			return !eventComponent.isPartOfRecurrenceSet() || eventComponent.isExactForkOfPrimary
 		},
 	},
+	mounted() {
+		window.addEventListener('keydown', this.hideEditor)
+		window.addEventListener('keydown', this.saveTheEvent)
+	},
+	beforeDestroy() {
+		window.removeEventListener('keydown', this.hideEditor)
+		window.removeEventListener('keydown', this.saveTheEvent)
+	},
 	methods: {
 		/**
 		 * Updates the access-class of this event
@@ -388,6 +396,16 @@ export default {
 				calendarObjectInstance: this.calendarObjectInstance,
 				customColor,
 			})
+		},
+		hideEditor(event) {
+			if (event.key === 'Escape') {
+				this.cancel()
+			}
+		},
+		saveTheEvent(event) {
+			if (event.key === 'Enter' && event.ctrlKey === true && !this.isReadOnly && !this.canCreateRecurrenceException) {
+				this.saveAndLeave(false)
+			}
 		},
 	},
 }

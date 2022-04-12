@@ -243,6 +243,8 @@ export default {
 		},
 	},
 	mounted() {
+		window.addEventListener('keydown', this.hideEditor)
+		window.addEventListener('keydown', this.saveTheEvent)
 		this.$nextTick(() => {
 			const isNew = this.$route.name === 'NewPopoverView'
 
@@ -253,6 +255,10 @@ export default {
 				.$children[0]
 				.$refs.trigger = this.getDomElementForPopover(isNew, this.$route)
 		})
+	},
+	beforeDestroy() {
+		window.removeEventListener('keydown', this.hideEditor)
+		window.removeEventListener('keydown', this.saveTheEvent)
 	},
 	methods: {
 		showMore() {
@@ -298,6 +304,16 @@ export default {
 			}
 
 			return matchingDomObject
+		},
+		hideEditor(event) {
+			if (event.key === 'Escape') {
+				this.cancel()
+			}
+		},
+		saveTheEvent(event) {
+			if (event.key === 'Enter' && event.ctrlKey === true && !this.isReadOnly && !this.canCreateRecurrenceException) {
+				this.saveAndLeave(false)
+			}
 		},
 	},
 }
