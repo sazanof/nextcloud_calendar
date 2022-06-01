@@ -37,7 +37,6 @@
 				<div class="icon icon-loading app-sidebar-tab-loading-indicator__icon" />
 			</div>
 		</template>
-
 		<template v-else-if="isError">
 			<EmptyContent>
 				{{ $t('calendar', 'Event does not exist') }}
@@ -199,10 +198,31 @@
 				@save-this-and-all-future="saveAndLeave(true)" />
 		</AppSidebarTab>
 		<AppSidebarTab v-if="!isLoading && !isError"
+			id="app-sidebar-tab-attachements"
+			class="app-sidebar-tab"
+			:name="$t('calendar', 'Attachments')"
+			:order="2">
+			<template #icon>
+				<Paperclip :size="20" decorative />
+			</template>
+			<div class="app-sidebar-tab__content">
+				<AttachmentsList v-if="!isLoading"
+					:calendar-object-instance="calendarObjectInstance"
+					:is-read-only="isReadOnly" />
+			</div>
+			<SaveButtons v-if="showSaveButtons"
+				class="app-sidebar-tab__buttons"
+				:can-create-recurrence-exception="canCreateRecurrenceException"
+				:is-new="isNew"
+				:force-this-and-all-future="forceThisAndAllFuture"
+				@save-this-only="saveAndLeave(false)"
+				@save-this-and-all-future="saveAndLeave(true)" />
+		</AppSidebarTab>
+		<AppSidebarTab v-if="!isLoading && !isError"
 			id="app-sidebar-tab-resources"
 			class="app-sidebar-tab"
 			:name="$t('calendar', 'Resources')"
-			:order="2">
+			:order="3">
 			<template #icon>
 				<MapMarker :size="20" decorative />
 			</template>
@@ -247,6 +267,7 @@ import PropertySelectMultiple from '../components/Editor/Properties/PropertySele
 import PropertyColor from '../components/Editor/Properties/PropertyColor.vue'
 import ResourceList from '../components/Editor/Resources/ResourceList'
 import InvitationResponseButtons from '../components/Editor/InvitationResponseButtons'
+import AttachmentsList from '../components/Editor/Attachments/AttachmentsList.vue'
 
 import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue'
@@ -254,6 +275,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import MapMarker from 'vue-material-design-icons/MapMarker.vue'
+import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 
 export default {
 	name: 'EditSidebar',
@@ -282,6 +304,8 @@ export default {
 		InformationOutline,
 		MapMarker,
 		InvitationResponseButtons,
+		Paperclip,
+		AttachmentsList,
 	},
 	mixins: [
 		EditorMixin,
@@ -309,6 +333,9 @@ export default {
 			}
 
 			return moment(this.calendarObjectInstance.startDate).locale(this.locale).fromNow()
+		},
+		attachments(){
+			return this.calendarObjectInstance?.attachments || null
 		},
 		/**
 		 * @return {boolean}
@@ -399,6 +426,7 @@ export default {
 				customColor,
 			})
 		},
+
 	},
 }
 </script>

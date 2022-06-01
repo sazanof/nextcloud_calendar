@@ -24,7 +24,7 @@ import getTimezoneManager from '../services/timezoneDataProviderService'
 import {
 	getDateFromDateTimeValue,
 } from '../utils/date.js'
-import { AttendeeProperty, Property, DateTimeValue, DurationValue, RecurValue } from '@nextcloud/calendar-js'
+import { AttendeeProperty, Property, DateTimeValue, DurationValue, RecurValue, AttachmentProperty, Parameter } from '@nextcloud/calendar-js'
 import { getBySetPositionAndBySetFromDate, getWeekDayFromDate } from '../utils/recurrence.js'
 import {
 	getDefaultEventObject,
@@ -1349,6 +1349,65 @@ const mutations = {
 				calendarObjectInstance.alarms.splice(index, 1)
 			}
 		}
+	},
+
+	addAttachmentBySharedData(state, { calendarObjectInstance, sharedData }){
+		const attachment = AttachmentProperty.fromLink(sharedData.url)
+		const fileName = sharedData.file_target.replace(/\//ig, "")
+
+		// hot-fix needed temporary, becase calendar-js has no fileName get-setter
+		const parameterFileName = new Parameter('FILENAME', fileName)
+	    attachment.setParameter(parameterFileName);
+		attachment.fileName = fileName
+		attachment.formatType = sharedData.mimetype
+		attachment.uri = sharedData.url
+
+		calendarObjectInstance.eventComponent.addProperty(attachment)
+		calendarObjectInstance.attachments.push(attachment)
+		console.log('addAttachmentBySharedData', attachment)
+	},
+
+	addAttachmentByLocalFile(state, { calendarObjectInstance, file }){
+		
+		const attachment = AttachmentProperty.fromLink(file.url)
+		// hot-fix needed temporary, becase calendar-js has no fileName get-setter
+		const parameterFileName = new Parameter('FILENAME', file.fileName)
+	    attachment.setParameter(parameterFileName);
+		
+		attachment.fileName = file.fileName
+		attachment.formatType = file.formatType
+		attachment.uri = file.uri
+
+		calendarObjectInstance.eventComponent.addProperty(attachment)
+
+		file.attachmentProperty = attachment
+		calendarObjectInstance.attachments.push(file)
+
+		console.log('addAttachmentByLocalFile', attachment)
+	},
+
+
+	/**
+	 *
+	 * @param {object} state The Vuex state
+	 * @param {object} data The destructuring object
+	 * @param {object} data.calendarObjectInstance The calendarObjectInstance object
+	 * @param {object} data.attachment The attachment object
+	 */
+	deleteAttachment(state, { calendarObjectInstance, attachment }) {
+		//todo - check this property
+		console.log(typeof attachment)
+		try {
+			const index = calendarObjectInstance.attachments.indexOf(attachment)
+			if (index !== -1) {
+				 calendarObjectInstance.attachments.splice(index, 1)
+			}
+			calendarObjectInstance.eventComponent.removeAttachment(attachment.attachmentProperty)
+		}
+		catch(error){
+			console.log(error)
+		}
+		
 	},
 }
 
