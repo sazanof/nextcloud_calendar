@@ -37,6 +37,8 @@ const getDefaultAttachmentObject = (props = {}) => Object.assign({}, {
 	uri: null,
 	// The value from calendar object
 	value: null,
+
+	managedId: null,
 }, props)
 
 /**
@@ -52,6 +54,7 @@ const mapAttachmentPropertyToAttchmentObject = (attachmentProperty) => {
 		formatType: attachmentProperty.formatType,
 		uri: attachmentProperty.uri,
 		value: attachmentProperty.value,
+		managedId: typeof attachmentProperty._parameters.get('MANAGED-ID') !== 'undefined' ? attachmentProperty._parameters.get('MANAGED-ID').value : null,
 	})
 }
 

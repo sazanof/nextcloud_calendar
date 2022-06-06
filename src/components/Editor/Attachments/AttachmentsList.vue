@@ -10,9 +10,9 @@
 				<ListItem v-for="attachment in attachments"
 					:key="attachment.value"
 					:force-display-actions="true"
-					:title="attachment.fileName">
+					:title="getBaseName(attachment.fileName)">
 					<template #icon>
-						<Paperclip :size="24" />
+						<img :src="getPreview(attachment.managedId,attachment.formatType)" class="attachment-icon">
 					</template>
 					<template #subtitle>
 						{{ attachment.formatType }}
@@ -35,8 +35,7 @@
 			</ul>
 			<div class="actions-absolute">
 				<Actions>
-					<ActionButton 
-						@click="openFilesModal()">
+					<ActionButton @click="openFilesModal()">
 						<template #icon>
 							<Folder :size="20" />
 						</template>
@@ -57,16 +56,14 @@
 			<template #desc>
 				<p>{{ t('calendar', 'This event has no attachments.') }}</p>
 				<div class="button-group">
-					<Button 
-						@click="openFilesModal()" 
-						type="primary">
+					<Button type="primary"
+						@click="openFilesModal()">
 						<template #icon>
 							<Folder :size="20" />
 						</template>
 						{{ t('calendar', 'Choose') }}
 					</Button>
-					<Button 
-						@click="clickOnUploadButton">
+					<Button @click="clickOnUploadButton">
 						<template #icon>
 							<Download :size="20" />
 						</template>
@@ -86,15 +83,15 @@ import ActionLink from '@nextcloud/vue/dist/Components/ActionLink'
 import Button from '@nextcloud/vue/dist/Components/Button'
 import EmptyContent from '@nextcloud/vue/dist/Components/EmptyContent'
 
-import Paperclip from 'vue-material-design-icons/Paperclip'
 import Download from 'vue-material-design-icons/Download'
 import TrashCan from 'vue-material-design-icons/TrashCan'
 import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
 import Folder from 'vue-material-design-icons/Folder'
 
+import { generateUrl } from '@nextcloud/router'
 import { getFilePickerBuilder } from '@nextcloud/dialogs'
 import { getRequestToken } from '@nextcloud/auth'
-import { shareFile, shareWith, uploadLocalAttachment } from './../../../services/attachmentService'
+import { shareFile, uploadLocalAttachment } from './../../../services/attachmentService'
 
 export default {
 	name: 'AttachmentsList',
@@ -105,12 +102,11 @@ export default {
 		ActionLink,
 		Button,
 		EmptyContent,
-		Paperclip,
 		Download,
 		TrashCan,
 		Folder,
 		CloudDownloadOutline,
-		
+
 	},
 	props: {
 		calendarObjectInstance: {
@@ -122,73 +118,84 @@ export default {
 			default: true,
 		},
 	},
-	data(){
-		
+	data() {
 		return {
 			uploading: false,
 		}
 	},
 	computed: {
-		attachments(){
+		attachments() {
 			return this.calendarObjectInstance.attachments
-		}
+		},
 	},
 	methods: {
-		addAttachmentBySharedData(calendarObjectInstance, sharedData){
+		addAttachmentBySharedData(calendarObjectInstance, sharedData) {
 			this.$store.commit('addAttachmentBySharedData', {
-				calendarObjectInstance: calendarObjectInstance,
-				sharedData: sharedData,
+				calendarObjectInstance,
+				sharedData,
 			})
 		},
 
-		addAttachmentByLocalFile(calendarObjectInstance, file){
-			console.log('input change')
+		addAttachmentByLocalFile(calendarObjectInstance, file) {
 			this.$store.commit('addAttachmentByLocalFile', {
-				calendarObjectInstance: calendarObjectInstance,
-				file: file,
+				calendarObjectInstance,
+				file,
 			})
 		},
 
 		deleteAttachmentFromEvent(attachment) {
-			console.log('deleteAttachmentFromEvent',attachment)
 			this.$store.commit('deleteAttachment', {
 				calendarObjectInstance: this.calendarObjectInstance,
-				attachment: attachment,
+				attachment,
 			})
 		},
 
-		async openFilesModal(){
+		async openFilesModal() {
 			const picker = getFilePickerBuilder(t('mail', 'Choose a file to add as attachment')).setMultiSelect(false).build()
-			try{
+			try {
 				const path = await picker.pick(t('mail', 'Choose a file to share as a link'))
 				const sharedData = await shareFile(path, getRequestToken())
 				this.addAttachmentBySharedData(this.calendarObjectInstance, sharedData)
-			}
-			catch(error){
+			} catch (error) {
 
 			}
 		},
 
-		clickOnUploadButton(){
+		clickOnUploadButton() {
 			this.$refs.localAttachments.click()
 		},
 
 		async onLocalAttachmentSelected(e) {
-			//const toUpload = sumBy(prop('size'), Object.values(e.target.files))
-			const attachments = await uploadLocalAttachment(e, this.$store.getters.getCurrentUserPrincipal.dav, this.attachments).then(
-				attachments => {
-					attachments.forEach(async attachment => {
-						console.log(attachment)
-						this.addAttachmentByLocalFile(this.calendarObjectInstance, attachment)
-						//const sharedData = await shareFile(attachment.path, getRequestToken())
-						
-					})
-				}
-			)
+			const attachments = await uploadLocalAttachment(e, this.$store.getters.getCurrentUserPrincipal.dav, this.attachments)
+
+			const sharedDataArray = await Promise.all(attachments.map(attachment => {
+				return shareFile(attachment.path, getRequestToken())
+			}))
+
+			sharedDataArray.map(sharedData => {
+				return this.addAttachmentBySharedData(this.calendarObjectInstance, sharedData)
+			})
+
 			e.target.value = ''
-			
-			
-		}
+
+		},
+		getIcon(mime) {
+			return OC.MimeType.getIconUrl(mime)
+		},
+
+		getPreview(managedId, mime) {
+			if (managedId !== null) {
+				const _mId = managedId.split('||')
+				if ((_mId.length === 2) && (_mId[1] === 'true')) {
+					return generateUrl(`/core/preview?fileId=${_mId[0]}&x=100&y=100&a=0`)
+				}
+			}
+
+			return mime ? OC.MimeType.getIconUrl(mime) : null
+		},
+		getBaseName(name) {
+			return name.split('/').pop()
+		},
 	},
 }
 </script>
@@ -218,5 +225,9 @@ export default {
 	button:first-child {
 		margin-right: 6px;
 	}
+}
+.attachment-icon {
+	width: 40px;
+    height: auto;
 }
 </style>

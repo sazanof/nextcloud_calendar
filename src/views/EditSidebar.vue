@@ -334,7 +334,7 @@ export default {
 
 			return moment(this.calendarObjectInstance.startDate).locale(this.locale).fromNow()
 		},
-		attachments(){
+		attachments() {
 			return this.calendarObjectInstance?.attachments || null
 		},
 		/**

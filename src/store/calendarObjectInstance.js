@@ -1351,29 +1351,32 @@ const mutations = {
 		}
 	},
 
-	addAttachmentBySharedData(state, { calendarObjectInstance, sharedData }){
+	addAttachmentBySharedData(state, { calendarObjectInstance, sharedData }) {
 		const attachment = AttachmentProperty.fromLink(sharedData.url)
-		const fileName = sharedData.file_target.replace(/\//ig, "")
+		const fileName = sharedData.path
 
 		// hot-fix needed temporary, becase calendar-js has no fileName get-setter
 		const parameterFileName = new Parameter('FILENAME', fileName)
-	    attachment.setParameter(parameterFileName);
+		const managedId = new Parameter('MANAGED-ID', `${sharedData.file_source}||${sharedData.has_preview}`)
+
+	    attachment.setParameter(parameterFileName)
+		attachment.setParameter(managedId)
 		attachment.fileName = fileName
+		attachment.managedId = `${sharedData.file_source}||${sharedData.has_preview}`
 		attachment.formatType = sharedData.mimetype
 		attachment.uri = sharedData.url
 
 		calendarObjectInstance.eventComponent.addProperty(attachment)
 		calendarObjectInstance.attachments.push(attachment)
-		console.log('addAttachmentBySharedData', attachment)
 	},
 
-	addAttachmentByLocalFile(state, { calendarObjectInstance, file }){
-		
+	addAttachmentByLocalFile(state, { calendarObjectInstance, file }) {
+
 		const attachment = AttachmentProperty.fromLink(file.url)
 		// hot-fix needed temporary, becase calendar-js has no fileName get-setter
 		const parameterFileName = new Parameter('FILENAME', file.fileName)
-	    attachment.setParameter(parameterFileName);
-		
+	    attachment.setParameter(parameterFileName)
+
 		attachment.fileName = file.fileName
 		attachment.formatType = file.formatType
 		attachment.uri = file.uri
@@ -1382,10 +1385,7 @@ const mutations = {
 
 		file.attachmentProperty = attachment
 		calendarObjectInstance.attachments.push(file)
-
-		console.log('addAttachmentByLocalFile', attachment)
 	},
-
 
 	/**
 	 *
@@ -1395,19 +1395,15 @@ const mutations = {
 	 * @param {object} data.attachment The attachment object
 	 */
 	deleteAttachment(state, { calendarObjectInstance, attachment }) {
-		//todo - check this property
-		console.log(typeof attachment)
 		try {
 			const index = calendarObjectInstance.attachments.indexOf(attachment)
 			if (index !== -1) {
 				 calendarObjectInstance.attachments.splice(index, 1)
 			}
 			calendarObjectInstance.eventComponent.removeAttachment(attachment.attachmentProperty)
+		} catch {
 		}
-		catch(error){
-			console.log(error)
-		}
-		
+
 	},
 }
 
