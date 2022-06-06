@@ -2,13 +2,13 @@ import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import { async } from 'regenerator-runtime'
 
 /**
  * Makes a share link for a given file or directory.
+ *
  * @param {string} path The file path from the user's root directory. e.g. `/myfile.txt`
  * @param {string} token The conversation's token
- * @returns {string} url share link
+ * @return {string} url share link
  */
 const shareFile = async function(path, token) {
 	try {
@@ -37,12 +37,12 @@ const shareFile = async function(path, token) {
 	}
 }
 
-const shareFileWith = async function(path, token, sharedWith, permissions = 17){
+const shareFileWith = async function(path, token, sharedWith, permissions = 17) {
 	try {
 		const res = await axios.post(generateOcsUrl('apps/files_sharing/api/v1/', 2) + 'shares', {
 			password: null,
 			shareType: 0, // WITH USERS,
-			permissions: permissions, // 14 - edit, 17 - view
+			permissions, // 14 - edit, 17 - view
 			path,
 			shareWith: sharedWith,
 		})
@@ -54,16 +54,15 @@ const shareFileWith = async function(path, token, sharedWith, permissions = 17){
 
 const uploadLocalAttachment = async function(event, dav, componentAttachments) {
 	const files = event.target.files
-	let attachments = [];
-	let promises = [];
-	
+	const attachments = []
+	const promises = []
+
 	files.forEach(file => {
-		if(componentAttachments.map(attachment => attachment.fileName).indexOf(file.name) !== -1){
-			showError(t('calendar', 'Attachment {fileName} already exists!',{
-				fileName: file.name
+		if (componentAttachments.map(attachment => attachment.fileName).indexOf(file.name) !== -1) {
+			showError(t('calendar', 'Attachment {fileName} already exists!', {
+				fileName: file.name,
 			}))
-		}
-		else {
+		} else {
 			const url = `/remote.php/dav/files/${dav.userId}/${file.name}`
 			const res = axios.put(url, file).then(resp => {
 				const data = {
@@ -71,26 +70,26 @@ const uploadLocalAttachment = async function(event, dav, componentAttachments) {
 					formatType: file.type,
 					uri: url,
 					value: url,
-					path: `/${file.name}`
+					path: `/${file.name}`,
 				}
-				if(resp.status === 204 || resp.status === 201){
-					showSuccess(t('calendar', 'Attachment {fileName} added!',{
-						fileName: file.name
+				if (resp.status === 204 || resp.status === 201) {
+					showSuccess(t('calendar', 'Attachment {fileName} added!', {
+						fileName: file.name,
 					}))
 					attachments.push(data)
 				}
 			})
 			promises.push(res)
 		}
-		
+
 	})
 	await Promise.all(promises)
 	return attachments
-	 
+
 }
 
-export { 
-	shareFile, 
+export {
+	shareFile,
 	shareFileWith,
-	uploadLocalAttachment
+	uploadLocalAttachment,
 }
